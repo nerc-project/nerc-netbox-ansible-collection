@@ -6,4 +6,5 @@ authors:
   - aabaris
 description: Collection of roles to deploy Netbox services
 repository: https://github.com/nerc-project/nerc-netbox-ansible-collection
-tags: []
+tags:
+  - linux
