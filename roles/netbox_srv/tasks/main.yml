@@ -77,3 +77,4 @@
     daemon_reload: true
     state: started
     enabled: true
+  when: not ansible_check_mode
