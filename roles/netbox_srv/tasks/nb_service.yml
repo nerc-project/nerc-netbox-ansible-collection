@@ -37,6 +37,10 @@
     network: "{{ netbox_srv_network }}"
     state: quadlet
     quadlet_filename: "{{ netbox_srv_svc.name }}"
+    quadlet_options:
+      - |
+        [Install]
+        WantedBy=default.target
     env_file: "{{ netbox_srv_svc.dir }}/env.sh"
     volumes:
       - "{{ netbox_srv_svc.dir }}/data:{{ netbox_srv_svc.dir_mount }}:rw,Z"
@@ -47,5 +51,5 @@
   ansible.builtin.systemd:
     name: "{{ netbox_srv_svc.name }}"
     daemon_reload: true
-    state: started
     enabled: true
+  when: not ansible_check_mode

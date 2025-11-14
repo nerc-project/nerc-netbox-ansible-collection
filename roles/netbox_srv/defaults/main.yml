@@ -1,7 +1,8 @@
 ---
 netbox_srv_instance: "nb1"
 netbox_srv_netbox_image: 'docker.io/netboxcommunity/netbox:v4.4-3.4.1'
-netbox_srv_netbox_openport: '8081:8080'
+netbox_srv_netbox_openport: '127.0.0.1:8081:8080'
+netbox_srv_allowed_hosts: ''
 netbox_srv_network: "{{ netbox_srv_instance }}-net"
 netbox_srv_netbox_rootpw: 'testpw'
 netbox_srv_prefix: '/srv'
