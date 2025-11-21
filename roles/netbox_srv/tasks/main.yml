@@ -52,6 +52,7 @@
     mode: "{{ item.mode | default('0644') }}"
   loop:
     - { file: 'backup.sh', mode: '0755' }
+    - { file: 'restore.sh', mode: '0755' }
 
 - name: Create Netbox quadlet file
   containers.podman.podman_container:

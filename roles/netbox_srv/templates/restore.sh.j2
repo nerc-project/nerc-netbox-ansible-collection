@@ -1,0 +1,32 @@
+#!/bin/bash
+
+set -e
+
+if [ ! -f  "$1" ]; then
+  echo "please provide a valid database dump file as an argument"
+  exit 1
+fi
+
+echo "CAUTION: highly destruction operation!"
+read -p "Do you want to proceed? (y/n): " response
+if [ $response != "y" ]; then
+  echo "exiting"
+  exit 1
+fi
+
+systemctl stop {{ netbox_srv_netbox_name }}-rqworker
+systemctl stop {{ netbox_srv_netbox_name }}
+
+podman exec -it {{ netbox_srv_svcs['pgsql'].name }} \
+  dropdb -U {{ netbox_srv_postgres_user }} \
+    --if-exists {{ netbox_srv_postgres_db }}
+
+podman exec -it {{ netbox_srv_svcs['pgsql'].name }} \
+  createdb -U {{ netbox_srv_postgres_user }} \
+    --if-exists {{ netbox_srv_postgres_db }}
+
+podman exec -i {{ netbox_srv_svcs['pgsql'].name }} \
+  psql --user {{ netbox_srv_postgres_user }} < "$1"
+
+systemctl start {{ netbox_srv_netbox_name }}
+systemctl start {{ netbox_srv_netbox_name }}-rqworker
