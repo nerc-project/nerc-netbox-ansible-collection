@@ -59,11 +59,6 @@
     image: "{{ netbox_srv_netbox_image }}"
     network: "{{ netbox_srv_network }}"
     state: quadlet
-    healthcheck: "curl -f http://localhost:8080/login/ || exit 1"
-    health_startup_cmd: "curl -f http://localhost:8080/login/ || exit 1"
-    health_startup_interval: 15s
-    health_startup_timeout: 3s
-    health_startup_retries: 20
     quadlet_filename: "{{ netbox_srv_netbox_name }}"
     quadlet_options:
       - |
