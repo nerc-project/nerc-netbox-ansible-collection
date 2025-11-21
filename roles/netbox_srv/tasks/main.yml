@@ -19,11 +19,11 @@
 - name: Initialize Netbox volume mount list
   ansible.builtin.set_fact:
     netbox_srv_volumes:
-      - "{{ netbox_srv_netbox_dir }}/rqworker-start.sh:/rqworker-start.sh:Z,ro"
-      - "{{ netbox_srv_netbox_dir }}/configuration:/etc/netbox/config:Z,ro"
-      - "{{ netbox_srv_netbox_dir }}/media:/opt/netbox/netbox/media:Z,rw"
-      - "{{ netbox_srv_netbox_dir }}/reports:/opt/netbox/netbox/reports:Z,rw"
-      - "{{ netbox_srv_netbox_dir }}/scripts:/opt/netbox/netbox/scripts:Z,rw"
+      - "{{ netbox_srv_netbox_dir }}/rqworker-start.sh:/rqworker-start.sh:z,ro"
+      - "{{ netbox_srv_netbox_dir }}/configuration:/etc/netbox/config:z,ro"
+      - "{{ netbox_srv_netbox_dir }}/media:/opt/netbox/netbox/media:z,rw"
+      - "{{ netbox_srv_netbox_dir }}/reports:/opt/netbox/netbox/reports:z,rw"
+      - "{{ netbox_srv_netbox_dir }}/scripts:/opt/netbox/netbox/scripts:z,rw"
 
 - name: Install Netbox env and config files
   ansible.builtin.template:
