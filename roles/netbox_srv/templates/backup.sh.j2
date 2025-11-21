@@ -57,7 +57,7 @@ function validate_input() {
 }
 
 function backup_netbox() {
-  timestamp=$(date +%Y%m%d%H%M%S)
+  timestamp=$(date +%Y%m%d%H%M%S%Z)
   echo ">>> Backing up Netbox Postgres DB"
   podman exec {{ netbox_srv_netbox_name }}-pgsql sh -c 'PGPASSWORD=$(echo $POSTGRES_PASSWORD) pg_dump -h {{ netbox_srv_netbox_name }}-pgsql -U $POSTGRES_USER $POSTGRES_DB' > $BACKUP_DIR/$timestamp.netbox-postgres.sql
   echo ">>> Backing up Netbox Media Files"

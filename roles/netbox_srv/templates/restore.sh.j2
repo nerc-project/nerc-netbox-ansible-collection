@@ -23,7 +23,7 @@ podman exec -it {{ netbox_srv_svcs['pgsql'].name }} \
 
 podman exec -it {{ netbox_srv_svcs['pgsql'].name }} \
   createdb -U {{ netbox_srv_postgres_user }} \
-    --if-exists {{ netbox_srv_postgres_db }}
+    {{ netbox_srv_postgres_db }}
 
 podman exec -i {{ netbox_srv_svcs['pgsql'].name }} \
   psql --user {{ netbox_srv_postgres_user }} < "$1"
