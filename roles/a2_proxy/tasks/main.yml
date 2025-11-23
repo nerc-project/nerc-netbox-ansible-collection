@@ -21,7 +21,7 @@
 
 - name: Add mod_oidc config
   ansible.builtin.set_fact:
-    a2_proxy_configs: "{{ a2_proxy_configs + [ a2_proxy_oidc_config ] }}"
+    a2_proxy_configs: "{{ a2_proxy_configs + [a2_proxy_oidc_config] }}"
   when: a2_proxy_oidc_client_id is not none
   vars:
     a2_proxy_oidc_config:
@@ -40,7 +40,7 @@
 - name: Install Apache2 proxy redirects
   ansible.builtin.template:
     src: "sites-enabled/{{ item.template }}.conf.j2"
-    dest: "{{ a2_proxy_dir}}/sites-enabled/{{ item.name }}.conf"
+    dest: "{{ a2_proxy_dir }}/sites-enabled/{{ item.name }}.conf"
     owner: "root"
     group: "root"
     mode: "0644"
@@ -65,8 +65,8 @@
     volumes: "{{ a2_proxy_volumes }}"
     quadlet_options:
     - |
-        [Install]
-        WantedBy=default.target
+      [Install]
+      WantedBy=default.target
   notify: Restart Apache2
 
 - name: Enable Apache2 systemd service
