@@ -1,0 +1,23 @@
+---
+a2_proxy_instance: "nerc"
+a2_proxy_name: "{{ a2_proxy_instance }}-apache2"
+a2_proxy_image: "ghcr.io/nerc-project/nerc-apache2:sha-744a261"
+a2_proxy_network: "host"
+a2_proxy_dir: "/srv/{{ a2_proxy_name }}"
+a2_proxy_ssl_cert_file: "/etc/ssl/certs/ssl-cert-snakeoil.pem"
+a2_proxy_ssl_key_file: "/etc/ssl/private/ssl-cert-snakeoil.key"
+
+# Apache2 mod_oidc vars used
+a2_proxy_oidc_client_id:
+a2_proxy_oidc_client_secret:
+a2_proxy_oidc_crypto_passphrase:
+a2_proxy_oidc_provider_metadata_url:
+a2_proxy_oidc_redirect_uri:
+
+# Apache2 proxy endpoint configs
+a2_proxy_endpoints: []
+## example entry
+# - name: "netbox"
+#   location: "/"
+#   template: "oidc_proxy"
+#   proxy_tgt: "http://127.0.0.1:8081/"
