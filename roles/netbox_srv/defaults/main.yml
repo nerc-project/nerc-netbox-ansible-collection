@@ -1,15 +1,19 @@
 ---
 netbox_srv_instance: "nb1"
 netbox_srv_netbox_image: 'docker.io/netboxcommunity/netbox:v4.4-3.4.1'
-netbox_srv_netbox_openport: '127.0.0.1:8081:8080'
+netbox_srv_bind_host: '127.0.0.1'
+netbox_srv_bind_port: '8081'
+netbox_srv_container_port:
+  "{{ netbox_srv_bind_host }}:{{ netbox_srv_bind_port }}:8080"
 netbox_srv_allowed_hosts: ''
+netbox_srv_extra_config: []
 netbox_srv_network: "{{ netbox_srv_instance }}-net"
 netbox_srv_netbox_rootpw: 'testpw'
 netbox_srv_prefix: '/srv'
 netbox_srv_netbox_name: "{{ netbox_srv_instance }}-netbox"
 netbox_srv_secret_key: >-
   "r(m)9nLGnz$(_q3N4z1k(EFsMCjjjzx08x9VhNVcfd%6RF#r!6DE@+V5Zk2X"
-netbox_srv_netbox_dir: "{{ netbox_srv_prefix }}/{{ netbox_srv_netbox_name }}"
+netbox_srv_dir: "{{ netbox_srv_prefix }}/{{ netbox_srv_netbox_name }}"
 #
 # postgres options
 #

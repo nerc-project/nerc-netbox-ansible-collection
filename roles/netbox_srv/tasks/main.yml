@@ -7,32 +7,34 @@
     group: 'root'
     mode: '0755'
   loop:
-    - "{{ netbox_srv_netbox_dir }}"
-    - "{{ netbox_srv_netbox_dir }}/configuration"
-    - "{{ netbox_srv_netbox_dir }}/configuration/ldap"
-    - "{{ netbox_srv_netbox_dir }}/media"
-    - "{{ netbox_srv_netbox_dir }}/reports"
-    - "{{ netbox_srv_netbox_dir }}/scripts"
-    - "{{ netbox_srv_netbox_dir }}/backups"
+    - "{{ netbox_srv_dir }}"
+    - "{{ netbox_srv_dir }}/configuration"
+    - "{{ netbox_srv_dir }}/configuration/ldap"
+    - "{{ netbox_srv_dir }}/media"
+    - "{{ netbox_srv_dir }}/reports"
+    - "{{ netbox_srv_dir }}/scripts"
+    - "{{ netbox_srv_dir }}/backups"
   notify: Restart netbox
 
 - name: Initialize Netbox volume mount list
   ansible.builtin.set_fact:
     netbox_srv_volumes:
-      - "{{ netbox_srv_netbox_dir }}/rqworker-start.sh:/rqworker-start.sh:z,ro"
-      - "{{ netbox_srv_netbox_dir }}/configuration:/etc/netbox/config:z,ro"
-      - "{{ netbox_srv_netbox_dir }}/media:/opt/netbox/netbox/media:z,rw"
-      - "{{ netbox_srv_netbox_dir }}/reports:/opt/netbox/netbox/reports:z,rw"
-      - "{{ netbox_srv_netbox_dir }}/scripts:/opt/netbox/netbox/scripts:z,rw"
+      - "{{ netbox_srv_dir }}/nginx-unit.json:/etc/unit/nginx-unit.json:z,ro"
+      - "{{ netbox_srv_dir }}/rqworker-start.sh:/rqworker-start.sh:z,ro"
+      - "{{ netbox_srv_dir }}/configuration:/etc/netbox/config:z,ro"
+      - "{{ netbox_srv_dir }}/media:/opt/netbox/netbox/media:z,rw"
+      - "{{ netbox_srv_dir }}/reports:/opt/netbox/netbox/reports:z,rw"
+      - "{{ netbox_srv_dir }}/scripts:/opt/netbox/netbox/scripts:z,rw"
 
 - name: Install Netbox env and config files
   ansible.builtin.template:
     src: "{{ item.file }}.j2"
-    dest: "{{ netbox_srv_netbox_dir }}/{{ item.file }}"
+    dest: "{{ netbox_srv_dir }}/{{ item.file }}"
     owner: "{{ item.owner | default('root') }}"
     group: "{{ item.group | default('root') }}"
     mode: "{{ item.mode | default('0644') }}"
   loop:
+    - { file: "nginx-unit.json" }
     - { file: "rqworker-start.sh", mode: "0755" }
     - { file: "netbox.env" }
     - { file: "configuration/configuration.py" }
@@ -46,7 +48,7 @@
 - name: Install additional Netbox config files (no restart)
   ansible.builtin.template:
     src: "{{ item.file }}.j2"
-    dest: "{{ netbox_srv_netbox_dir }}/{{ item.file }}"
+    dest: "{{ netbox_srv_dir }}/{{ item.file }}"
     owner: "{{ item.owner | default('root') }}"
     group: "{{ item.group | default('root') }}"
     mode: "{{ item.mode | default('0644') }}"
@@ -65,8 +67,8 @@
       - |
         [Install]
         WantedBy=default.target
-    env_file: "{{ netbox_srv_netbox_dir }}/netbox.env"
-    ports: "{{ netbox_srv_netbox_openport }}"
+    env_file: "{{ netbox_srv_dir }}/netbox.env"
+    ports: "{{ netbox_srv_container_port }}"
     volumes: "{{ netbox_srv_volumes }}"
   notify: Restart netbox
 
@@ -82,7 +84,7 @@
         [Install]
         WantedBy=default.target
         After={{ netbox_srv_netbox_name }}
-    env_file: "{{ netbox_srv_netbox_dir }}/netbox.env"
+    env_file: "{{ netbox_srv_dir }}/netbox.env"
     volumes: "{{ netbox_srv_volumes }}"
     command:
       - /rqworker-start.sh
@@ -129,5 +131,5 @@
     user: root
     state: present
     job: >-
-      {{ netbox_srv_netbox_dir }}/backup.sh >>
-      {{ netbox_srv_netbox_dir }}/backups/log 2>&1
+      {{ netbox_srv_dir }}/backup.sh >>
+      {{ netbox_srv_dir }}/backups/log 2>&1
