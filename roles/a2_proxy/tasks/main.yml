@@ -64,9 +64,9 @@
     quadlet_filename: "{{ a2_proxy_name }}"
     volumes: "{{ a2_proxy_volumes }}"
     quadlet_options:
-    - |
-      [Install]
-      WantedBy=default.target
+      - |
+        [Install]
+        WantedBy=default.target
   notify: Restart Apache2
 
 - name: Enable Apache2 systemd service
