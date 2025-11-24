@@ -1,8 +1,0 @@
-- name: Restart Netbox
-  ansible.builtin.service:
-    name: "{{ item }}"
-    state: restarted
-  loop:
-    - "container-{{ netbox_name }}"
-    - "container-{{ netbox_name }}-rqworker"
-    - "container-{{ netbox_name }}-housekeeping"
