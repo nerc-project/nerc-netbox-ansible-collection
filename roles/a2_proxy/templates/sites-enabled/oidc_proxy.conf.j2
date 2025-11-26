@@ -1,0 +1,8 @@
+<Location {{ item.location }}>
+        Require valid-user
+        AuthType openid-connect
+        WSGIPassAuthorization on
+        RequestHeader set "X-Forwarded-Proto" "https"
+        ProxyPass {{ item.proxy_tgt }}
+        ProxyPassReverse {{ item.proxy_tgt }}
+</Location>

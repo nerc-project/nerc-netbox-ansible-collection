@@ -1,0 +1,75 @@
+#!/bin/bash
+
+DEBUG=${DEBUG:-"false"}
+BACKUP_DIR=${BACKUP_DIR:-{{ netbox_srv_dir }}/backups}
+BACKUP_ROTATE=${BACKUP_ROTATE:-120}
+AWSCLI_CREDS=${AWSCLI_CREDS:-"$HOME/.aws/credentials"}
+S3_ENDPOINT=${S3_ENDPOINT:-"{% if netbox_srv_s3_endpoint_url is defined %}{{ netbox_srv_s3_endpoint_url }}{% endif %}"}
+S3_BUCKET_URI=${S3_BUCKET_URI:-"{% if netbox_srv_s3_bucket_uri is defined %}{{ netbox_srv_s3_bucket_uri }}{% endif %}"}
+
+[[ "${DEBUG}" =~ (1|true) ]] && set -x
+
+while getopts "s" flag; do
+  case "${flag}" in
+    s) skips3=true ;;
+    *) echo "Invalid option: -${flag}"
+       echo -n "Usage: \n  ./backup.sh [{-s}]\n"
+       exit 1 ;;
+  esac
+done
+
+if [[ $skips3 ]]; then
+  echo "Warning skipping S3 backups per command line arg"
+fi 
+
+function retention() {
+  backups_to_delete=$(find "${BACKUP_DIR}" -type f | sort -rn | tail -n +$((${BACKUP_ROTATE} + 1)))
+  echo ">>> Running retention (rotate: ${BACKUP_ROTATE})"
+  for f in $backups_to_delete; do
+    echo "removing ${f}"
+    rm -f "${f}"
+  done
+}
+
+function sync_s3_to_backups_dir() {
+  echo ">>> Syncing ${S3_BUCKET_URI} to ${BACKUP_DIR} (endpoint: ${S3_ENDPOINT})"
+  podman run --net host --rm -v $BACKUP_DIR:$BACKUP_DIR:rw,Z -v /root/.aws:/root/.aws:ro,Z docker://amazon/aws-cli s3 sync "${S3_BUCKET_URI}" "${BACKUP_DIR}"
+}
+
+function sync_backups_to_s3() {
+  echo ">>> Syncing ${BACKUP_DIR} to ${S3_BUCKET_URI} (endpoint: ${S3_ENDPOINT})"
+  podman run --net host --rm -v $BACKUP_DIR:$BACKUP_DIR:ro,Z -v /root/.aws:/root/.aws:ro,Z docker://amazon/aws-cli s3 sync --delete "${BACKUP_DIR}" "${S3_BUCKET_URI}"
+}
+
+
+function exit_error() {
+  echo $1 1>&2
+  exit 1
+}
+
+function validate_input() {
+  if [ ! -d "${BACKUP_DIR}" ]; then
+    exit_error "BACKUP_DIR does not exist: ${BACKUP_DIR}"
+  fi
+  if [ ! -f "${AWSCLI_CREDS}" ] && [ "${skips3}" != true ]; then
+    exit_error "AWSCLI_CREDS does not exist: ${AWSCLI_CREDS}"
+  fi
+}
+
+function backup_netbox() {
+  timestamp=$(date +%Y%m%d%H%M%S%Z)
+  echo ">>> Backing up Netbox Postgres DB"
+  podman exec {{ netbox_srv_netbox_name }}-pgsql sh -c 'PGPASSWORD=$(echo $POSTGRES_PASSWORD) pg_dump -h {{ netbox_srv_netbox_name }}-pgsql -U $POSTGRES_USER $POSTGRES_DB' > $BACKUP_DIR/$timestamp.netbox-postgres.sql
+  echo ">>> Backing up Netbox Media Files"
+  cd {{ netbox_srv_dir }}; tar cfz $BACKUP_DIR/$timestamp.netbox-media.tar.gz media
+}
+
+function main() {
+  [[ "$skips3" != "true" ]] && sync_s3_to_backups_dir
+  validate_input
+  backup_netbox
+  retention
+  [[ "$skips3" != "true" ]] && sync_backups_to_s3
+}
+
+main

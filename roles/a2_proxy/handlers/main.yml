@@ -1,0 +1,7 @@
+---
+- name: Restart Apache2
+  ansible.builtin.systemd:
+    name: "{{ a2_proxy_name }}"
+    state: restarted
+    daemon_reload: true
+  when: not ansible_check_mode

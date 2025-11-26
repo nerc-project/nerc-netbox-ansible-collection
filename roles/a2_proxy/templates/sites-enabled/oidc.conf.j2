@@ -1,0 +1,20 @@
+OIDCClientID {{ a2_proxy_oidc_client_id }}
+OIDCClientSecret {{ a2_proxy_oidc_client_secret }}
+OIDCCryptoPassphrase {{ a2_proxy_oidc_crypto_passphrase }}
+
+OIDCProviderMetadataURL {{ a2_proxy_oidc_provider_metadata_url }}
+OIDCRedirectURI {{ a2_proxy_oidc_redirect_uri }}
+
+## Some additional settings left in comments fo reference
+# See https://github.com/Reposoft/openidc-keycloak-test/issues/7
+# OIDCProviderTokenEndpointAuth client_secret_basic
+# OIDCUnAutzAction 302 /auth/re?logout=https%3A%2F%2Fhost.domain.org%2Fnotice
+# OIDCSSLValidateServer Off
+
+OIDCUserInfoRefreshInterval 1
+OIDCScope "openid email"
+OIDCRemoteUserClaim email
+OIDCPassUserInfoAs claims
+OIDCPassClaimsAs headers
+RequestHeader unset REMOTE_USER
+RequestHeader set REMOTE_USER expr=%{REMOTE_USER}

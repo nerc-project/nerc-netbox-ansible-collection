@@ -1,0 +1,77 @@
+---
+- name: Create Apache2 service top level directories
+  ansible.builtin.file:
+    path: "{{ item.dir }}"
+    state: directory
+    owner: "{{ item.owner | default('root') }}"
+    group: "{{ item.group | default('root') }}"
+    mode: "{{ item.mode | default('0755') }}"
+  loop:
+    - { dir: "{{ a2_proxy_dir }}" }
+    - { dir: "{{ a2_proxy_dir }}/log" }
+    - { dir: "{{ a2_proxy_dir }}/sites-enabled" }
+    - { dir: "{{ a2_proxy_dir }}/ssl" }
+    - { dir: "{{ a2_proxy_dir }}/html" }
+
+- name: Create Apache2 config list
+  ansible.builtin.set_fact:
+    a2_proxy_configs:
+      - { file: "sites-enabled/000-default.conf" }
+      - { file: "sites-enabled/default-ssl.conf" }
+
+- name: Add mod_oidc config
+  ansible.builtin.set_fact:
+    a2_proxy_configs: "{{ a2_proxy_configs + [a2_proxy_oidc_config] }}"
+  when: a2_proxy_oidc_client_id is not none
+  vars:
+    a2_proxy_oidc_config:
+      file: "sites-enabled/oidc.conf"
+
+- name: Install Apache2 config files
+  ansible.builtin.template:
+    src: "{{ item.file }}.j2"
+    dest: "{{ a2_proxy_dir }}/{{ item.file }}"
+    owner: "{{ item.owner | default('root') }}"
+    group: "{{ item.group | default('root') }}"
+    mode: "{{ item.mode | default('0644') }}"
+  loop: "{{ a2_proxy_configs }}"
+  notify: Restart Apache2
+
+- name: Install Apache2 proxy redirects
+  ansible.builtin.template:
+    src: "sites-enabled/{{ item.template }}.conf.j2"
+    dest: "{{ a2_proxy_dir }}/sites-enabled/{{ item.name }}.conf"
+    owner: "root"
+    group: "root"
+    mode: "0644"
+  loop:
+    "{{ a2_proxy_endpoints }}"
+  notify: Restart Apache2
+
+- name: Create Apache2 container mount list
+  ansible.builtin.set_fact:
+    a2_proxy_volumes:
+      - "{{ a2_proxy_dir }}/log:/var/log/apache2:rw,Z"
+      - "{{ a2_proxy_dir }}/sites-enabled:/etc/apache2/sites-enabled:ro,Z"
+      - "{{ a2_proxy_dir }}/ssl:/etc/apache2/ssl:ro,Z"
+
+- name: Create Apache2 quadlet file
+  containers.podman.podman_container:
+    name: "{{ a2_proxy_name }}"
+    image: "{{ a2_proxy_image }}"
+    network: "{{ a2_proxy_network }}"
+    state: quadlet
+    quadlet_filename: "{{ a2_proxy_name }}"
+    volumes: "{{ a2_proxy_volumes }}"
+    quadlet_options:
+      - |
+        [Install]
+        WantedBy=default.target
+  notify: Restart Apache2
+
+- name: Enable Apache2 systemd service
+  ansible.builtin.systemd:
+    name: "{{ a2_proxy_name }}"
+    daemon_reload: true
+    enabled: true
+  when: not ansible_check_mode

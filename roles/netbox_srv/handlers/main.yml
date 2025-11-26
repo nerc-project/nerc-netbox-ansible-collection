@@ -1,0 +1,35 @@
+---
+- name: Restart redis
+  ansible.builtin.systemd:
+    name: "{{ netbox_srv_svcs['redis'].name }}"
+    state: restarted
+    daemon_reload: true
+  when: not ansible_check_mode
+
+- name: Restart redis-cache
+  ansible.builtin.systemd:
+    name: "{{ netbox_srv_svcs['redis-cache'].name }}"
+    state: restarted
+    daemon_reload: true
+  when: not ansible_check_mode
+
+- name: Restart pgsql
+  ansible.builtin.systemd:
+    name: "{{ netbox_srv_svcs['pgsql'].name }}"
+    state: restarted
+    daemon_reload: true
+  when: not ansible_check_mode
+
+- name: Restart netbox
+  ansible.builtin.systemd:
+    name: "{{ netbox_srv_netbox_name }}"
+    state: restarted
+    daemon_reload: true
+  when: not ansible_check_mode
+
+- name: Restart netbox-rqworker
+  ansible.builtin.systemd:
+    name: "{{ netbox_srv_netbox_name }}-rqworker"
+    state: restarted
+    daemon_reload: true
+  when: not ansible_check_mode

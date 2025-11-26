@@ -1,0 +1,135 @@
+---
+- name: Create Netbox services top level directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: 'root'
+    group: 'root'
+    mode: '0755'
+  loop:
+    - "{{ netbox_srv_dir }}"
+    - "{{ netbox_srv_dir }}/configuration"
+    - "{{ netbox_srv_dir }}/configuration/ldap"
+    - "{{ netbox_srv_dir }}/media"
+    - "{{ netbox_srv_dir }}/reports"
+    - "{{ netbox_srv_dir }}/scripts"
+    - "{{ netbox_srv_dir }}/backups"
+  notify: Restart netbox
+
+- name: Initialize Netbox volume mount list
+  ansible.builtin.set_fact:
+    netbox_srv_volumes:
+      - "{{ netbox_srv_dir }}/nginx-unit.json:/etc/unit/nginx-unit.json:z,ro"
+      - "{{ netbox_srv_dir }}/rqworker-start.sh:/rqworker-start.sh:z,ro"
+      - "{{ netbox_srv_dir }}/configuration:/etc/netbox/config:z,ro"
+      - "{{ netbox_srv_dir }}/media:/opt/netbox/netbox/media:z,rw"
+      - "{{ netbox_srv_dir }}/reports:/opt/netbox/netbox/reports:z,rw"
+      - "{{ netbox_srv_dir }}/scripts:/opt/netbox/netbox/scripts:z,rw"
+
+- name: Install Netbox env and config files
+  ansible.builtin.template:
+    src: "{{ item.file }}.j2"
+    dest: "{{ netbox_srv_dir }}/{{ item.file }}"
+    owner: "{{ item.owner | default('root') }}"
+    group: "{{ item.group | default('root') }}"
+    mode: "{{ item.mode | default('0644') }}"
+  loop:
+    - { file: "nginx-unit.json" }
+    - { file: "rqworker-start.sh", mode: "0755" }
+    - { file: "netbox.env" }
+    - { file: "configuration/configuration.py" }
+    - { file: "configuration/extra.py" }
+    - { file: "configuration/logging.py" }
+    - { file: "configuration/plugins.py" }
+    - { file: "configuration/ldap/ldap_config.py" }
+    - { file: "configuration/ldap/extra.py" }
+  notify: Restart netbox
+
+- name: Install additional Netbox config files (no restart)
+  ansible.builtin.template:
+    src: "{{ item.file }}.j2"
+    dest: "{{ netbox_srv_dir }}/{{ item.file }}"
+    owner: "{{ item.owner | default('root') }}"
+    group: "{{ item.group | default('root') }}"
+    mode: "{{ item.mode | default('0644') }}"
+  loop:
+    - { file: 'backup.sh', mode: '0755' }
+    - { file: 'restore.sh', mode: '0755' }
+
+- name: Create Netbox quadlet file
+  containers.podman.podman_container:
+    name: "{{ netbox_srv_netbox_name }}"
+    image: "{{ netbox_srv_netbox_image }}"
+    network: "{{ netbox_srv_network }}"
+    state: quadlet
+    quadlet_filename: "{{ netbox_srv_netbox_name }}"
+    quadlet_options:
+      - |
+        [Install]
+        WantedBy=default.target
+    env_file: "{{ netbox_srv_dir }}/netbox.env"
+    ports: "{{ netbox_srv_container_port }}"
+    volumes: "{{ netbox_srv_volumes }}"
+  notify: Restart netbox
+
+- name: Create Netbox rqworker quadlet file
+  containers.podman.podman_container:
+    name: "{{ netbox_srv_netbox_name }}-rqworker"
+    image: "{{ netbox_srv_netbox_image }}"
+    network: "{{ netbox_srv_network }}"
+    state: quadlet
+    quadlet_filename: "{{ netbox_srv_netbox_name }}-rqworker"
+    quadlet_options:
+      - |
+        [Install]
+        WantedBy=default.target
+        After={{ netbox_srv_netbox_name }}
+    env_file: "{{ netbox_srv_dir }}/netbox.env"
+    volumes: "{{ netbox_srv_volumes }}"
+    command:
+      - /rqworker-start.sh
+  notify: Restart netbox-rqworker
+
+- name: Create Netbox Podman Network
+  containers.podman.podman_network:
+    name: "{{ netbox_srv_network }}"
+    state: present
+
+- name: Create Postgresql container
+  ansible.builtin.include_tasks: nb_service.yml
+  vars:
+    netbox_srv_svc_key: 'pgsql'
+  when: netbox_srv_postgres_instance is false
+
+- name: Create Redis container
+  ansible.builtin.include_tasks: nb_service.yml
+  vars:
+    netbox_srv_svc_key: 'redis'
+  when: netbox_srv_redis_instance is false
+
+- name: Create Redis cache container
+  ansible.builtin.include_tasks: nb_service.yml
+  vars:
+    netbox_srv_svc_key: 'redis-cache'
+  when: netbox_srv_redis_cache_instance is false
+
+- name: Enable Netbox systemd service
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    daemon_reload: true
+    enabled: true
+  when: not ansible_check_mode
+  loop:
+    - "{{ netbox_srv_netbox_name }}"
+    - "{{ netbox_srv_netbox_name }}-rqworker"
+
+- name: Create backup cron
+  ansible.builtin.cron:
+    name: "netbox-backup"
+    minute: "0"
+    hour: "18"
+    user: root
+    state: present
+    job: >-
+      {{ netbox_srv_dir }}/backup.sh >>
+      {{ netbox_srv_dir }}/backups/log 2>&1
