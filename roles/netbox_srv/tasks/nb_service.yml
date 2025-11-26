@@ -1,0 +1,55 @@
+---
+- name: Look up variables for {{ netbox_srv_svc_key }}
+  ansible.builtin.set_fact:
+    netbox_srv_svc: "{{ netbox_srv_svcs[netbox_srv_svc_key] }}"
+
+- name: Create top level directory for {{ netbox_srv_svc_key }}
+  ansible.builtin.file:
+    path: "{{ netbox_srv_svc.dir }}"
+    state: directory
+    owner: 'root'
+    group: 'root'
+    mode: '0700'
+  notify: "Restart {{ netbox_srv_svc_key }}"
+
+- name: Create data directory for {{ netbox_srv_svc_key }}
+  ansible.builtin.file:
+    path: "{{ netbox_srv_svc.dir }}/data"
+    state: directory
+    owner: "{{ netbox_srv_svc.dir_owner | default('root') }}"
+    group: "{{ netbox_srv_svc.dir_group | default('root') }}"
+    mode: "{{ netbox_srv_svc.dir_mode | default('0700') }}"
+  notify: "Restart {{ netbox_srv_svc_key }}"
+
+- name: Install env file for {{ netbox_srv_svc_key }}
+  ansible.builtin.template:
+    src: "{{ netbox_srv_svc_key }}.env.j2"
+    dest: "{{ netbox_srv_svc.dir }}/env.sh"
+    owner: 'root'
+    group: 'root'
+    mode: '0600'
+  notify: "Restart {{ netbox_srv_svc_key }}"
+
+- name: Create quadlet file for {{ netbox_srv_svc_key }}
+  containers.podman.podman_container:
+    name: "{{ netbox_srv_svc.name }}"
+    image: "{{ netbox_srv_svc.image }}"
+    network: "{{ netbox_srv_network }}"
+    state: quadlet
+    quadlet_filename: "{{ netbox_srv_svc.name }}"
+    quadlet_options:
+      - |
+        [Install]
+        WantedBy=default.target
+    env_file: "{{ netbox_srv_svc.dir }}/env.sh"
+    volumes:
+      - "{{ netbox_srv_svc.dir }}/data:{{ netbox_srv_svc.dir_mount }}:rw,Z"
+    command: "{{ netbox_srv_svc.command }}"
+  notify: "Restart {{ netbox_srv_svc_key }}"
+
+- name: Enable systemd service for {{ netbox_srv_svc_key }}
+  ansible.builtin.systemd:
+    name: "{{ netbox_srv_svc.name }}"
+    daemon_reload: true
+    enabled: true
+  when: not ansible_check_mode

@@ -1,0 +1,66 @@
+---
+netbox_srv_instance: "nb1"
+netbox_srv_netbox_image: 'docker.io/netboxcommunity/netbox:v4.4-3.4.1'
+netbox_srv_bind_host: '127.0.0.1'
+netbox_srv_bind_port: '8081'
+netbox_srv_container_port:
+  "{{ netbox_srv_bind_host }}:{{ netbox_srv_bind_port }}:8080"
+netbox_srv_allowed_hosts: ''
+netbox_srv_extra_config: []
+netbox_srv_network: "{{ netbox_srv_instance }}-net"
+netbox_srv_netbox_rootpw: 'testpw'
+netbox_srv_prefix: '/srv'
+netbox_srv_netbox_name: "{{ netbox_srv_instance }}-netbox"
+netbox_srv_secret_key: >-
+  "r(m)9nLGnz$(_q3N4z1k(EFsMCjjjzx08x9VhNVcfd%6RF#r!6DE@+V5Zk2X"
+netbox_srv_dir: "{{ netbox_srv_prefix }}/{{ netbox_srv_netbox_name }}"
+#
+# postgres options
+#
+netbox_srv_postgres_instance: false
+netbox_srv_postgres_host: "{{ netbox_srv_instance }}-netbox-pgsql"
+netbox_srv_postgres_db: 'netbox'
+netbox_srv_postgres_user: 'netbox'
+netbox_srv_postgres_pw: 'testpw'
+#
+# redis options
+#
+netbox_srv_redis_instance: false
+netbox_srv_redis_host: "{{ netbox_srv_instance }}-netbox-redis"
+netbox_srv_redis_password: 'testpw'
+#
+# redis cache options
+#
+netbox_srv_redis_cache_instance: false
+netbox_srv_redis_cache_host: "{{ netbox_srv_instance }}-netbox-redis-cache"
+netbox_srv_redis_cache_password: 'testpw'
+
+netbox_srv_svcs:
+  pgsql:
+    name: "{{ netbox_srv_postgres_host }}"
+    dir: "{{ netbox_srv_prefix }}/{{ netbox_srv_postgres_host }}"
+    dir_owner: "70"
+    dir_mount: "/var/lib/postgresql/data"
+    image: 'docker.io/postgres:17-alpine'
+    password: "{{ netbox_srv_postgres_pw }}"
+    command: 'postgres'
+  redis:
+    name: "{{ netbox_srv_redis_host }}"
+    dir: "{{ netbox_srv_prefix }}/{{ netbox_srv_redis_host }}"
+    dir_mount: "/data"
+    image: 'docker.io/valkey/valkey:8.1-alpine'
+    password: "{{ netbox_srv_redis_password }}"
+    command:
+      - sh
+      - -c
+      - '"valkey-server --requirepass $REDIS_PASSWORD"'
+  redis-cache:
+    name: "{{ netbox_srv_redis_cache_host }}"
+    dir: "{{ netbox_srv_prefix }}/{{ netbox_srv_redis_cache_host }}"
+    dir_mount: "/data"
+    image: 'docker.io/valkey/valkey:8.1-alpine'
+    password: "{{ netbox_srv_redis_cache_password }}"
+    command:
+      - sh
+      - -c
+      - '"valkey-server --requirepass $REDIS_PASSWORD"'
