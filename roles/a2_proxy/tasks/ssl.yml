@@ -1,0 +1,20 @@
+---
+- name: Copy cert file
+  ansible.builtin.copy:
+    src: "{{ a2_proxy_ssl_src_cert_file }}"
+    dest: "{{ a2_proxy_dir }}/ssl/cert.pem"
+    owner: 'root'
+    group: 'root'
+    mode: '0644'
+    remote_src: yes
+  notify: Restart Apache2
+
+- name: Copy key file
+  ansible.builtin.copy:
+    src: "{{ a2_proxy_ssl_src_key_file }}"
+    dest: "{{ a2_proxy_dir }}/ssl/key.pem"
+    owner: 'root'
+    group: 'root'
+    mode: '0600'
+    remote_src: yes
+  notify: Restart Apache2
