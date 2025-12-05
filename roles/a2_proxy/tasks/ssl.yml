@@ -6,7 +6,7 @@
     owner: 'root'
     group: 'root'
     mode: '0644'
-    remote_src: yes
+    remote_src: true
   notify: Restart Apache2
 
 - name: Copy key file
@@ -16,5 +16,5 @@
     owner: 'root'
     group: 'root'
     mode: '0600'
-    remote_src: yes
+    remote_src: true
   notify: Restart Apache2
