@@ -8,6 +8,7 @@
     mode: '0644'
     remote_src: true
   notify: Restart Apache2
+  when: not ansible_check_mode
 
 - name: Copy key file
   ansible.builtin.copy:
@@ -18,3 +19,4 @@
     mode: '0600'
     remote_src: true
   notify: Restart Apache2
+  when: not ansible_check_mode
