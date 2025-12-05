@@ -14,6 +14,7 @@ netbox_srv_netbox_name: "{{ netbox_srv_instance }}-netbox"
 netbox_srv_secret_key: >-
   "r(m)9nLGnz$(_q3N4z1k(EFsMCjjjzx08x9VhNVcfd%6RF#r!6DE@+V5Zk2X"
 netbox_srv_dir: "{{ netbox_srv_prefix }}/{{ netbox_srv_netbox_name }}"
+netbox_srv_backup_arg: ""
 #
 # postgres options
 #
