@@ -34,7 +34,9 @@
     group: "{{ item.group | default('root') }}"
     mode: "{{ item.mode | default('0644') }}"
   loop: "{{ netbox_srv_config_files }}"
-  notify: Restart netbox
+  notify:
+    - Restart netbox
+    - Restart netbox-rqworker
 
 - name: Install additional Netbox config files (no restart)
   ansible.builtin.template:
