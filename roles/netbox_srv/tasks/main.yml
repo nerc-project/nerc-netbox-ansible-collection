@@ -28,21 +28,12 @@
 
 - name: Install Netbox env and config files
   ansible.builtin.template:
-    src: "{{ item.file }}.j2"
+    src: "{{ item.src | default(item.file) }}.j2"
     dest: "{{ netbox_srv_dir }}/{{ item.file }}"
     owner: "{{ item.owner | default('root') }}"
     group: "{{ item.group | default('root') }}"
     mode: "{{ item.mode | default('0644') }}"
-  loop:
-    - { file: "nginx-unit.json" }
-    - { file: "rqworker-start.sh", mode: "0755" }
-    - { file: "netbox.env" }
-    - { file: "configuration/configuration.py" }
-    - { file: "configuration/extra.py" }
-    - { file: "configuration/logging.py" }
-    - { file: "configuration/plugins.py" }
-    - { file: "configuration/ldap/ldap_config.py" }
-    - { file: "configuration/ldap/extra.py" }
+  loop: "{{ netbox_srv_config_files }}"
   notify: Restart netbox
 
 - name: Install additional Netbox config files (no restart)
