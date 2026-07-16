@@ -48,6 +48,13 @@
     "{{ a2_proxy_endpoints }}"
   notify: Restart Apache2
 
+- name: Install SSL key+cert from src dir
+  ansible.builtin.include_tasks:
+    ssl.yml
+  when:
+    - a2_proxy_ssl_src_cert_file is not none
+    - a2_proxy_ssl_src_key_file is not none
+
 - name: Create Apache2 container mount list
   ansible.builtin.set_fact:
     a2_proxy_volumes:

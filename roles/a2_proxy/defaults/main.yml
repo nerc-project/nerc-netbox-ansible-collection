@@ -6,6 +6,8 @@ a2_proxy_network: "host"
 a2_proxy_dir: "/srv/{{ a2_proxy_name }}"
 a2_proxy_ssl_cert_file: "/etc/ssl/certs/ssl-cert-snakeoil.pem"
 a2_proxy_ssl_key_file: "/etc/ssl/private/ssl-cert-snakeoil.key"
+a2_proxy_ssl_src_cert_file:
+a2_proxy_ssl_src_key_file:
 
 # Apache2 mod_oidc vars used
 a2_proxy_oidc_client_id:
@@ -19,5 +21,6 @@ a2_proxy_endpoints: []
 ## example entry
 # - name: "netbox"
 #   location: "/"
+#   require: "valid-user"
 #   template: "oidc_proxy"
 #   proxy_tgt: "http://127.0.0.1:8081/"

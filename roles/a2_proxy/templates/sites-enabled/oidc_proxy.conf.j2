@@ -6,3 +6,7 @@
         ProxyPass {{ item.proxy_tgt }}
         ProxyPassReverse {{ item.proxy_tgt }}
 </Location>
+{% if item.extra_cfg is defined %}
+{% for cfg in item.extra_cfg %}
+{{ cfg }}
+{% endfor %}{% endif %}
