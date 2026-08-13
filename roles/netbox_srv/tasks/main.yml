@@ -63,6 +63,7 @@
     env_file: "{{ netbox_srv_dir }}/netbox.env"
     ports: "{{ netbox_srv_container_port }}"
     volumes: "{{ netbox_srv_volumes }}"
+    timezone: "{{ netbox_srv_timezone }}"
   notify: Restart netbox
 
 - name: Create Netbox rqworker quadlet file
@@ -81,6 +82,7 @@
     volumes: "{{ netbox_srv_volumes }}"
     command:
       - /rqworker-start.sh
+    timezone: "{{ netbox_srv_timezone }}"
   notify: Restart netbox-rqworker
 
 - name: Create Netbox Podman Network
